@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "fhevm/lib/TFHE.sol";
-import {ConfidentialToken} from "./ConfidentialERC20/ExampleERC20.sol";
+import {ConfidentialToken} from "./ConfidentialERC20/ConfidentialToken.sol";
 import "./Identity.sol";
 import "./TransferRules.sol";
 
@@ -10,14 +10,13 @@ import "./TransferRules.sol";
 contract CompliantConfidentialERC20 is ConfidentialToken {
     Identity public identityContract;
     TransferRules public transferRulesContract;
-
     constructor(
-        string memory name_, 
-        string memory symbol_, 
-        address _identityContract, 
+        string memory name_,
+        string memory symbol_,
+        address _identityContract,
         address _transferRulesContract
-    ) 
-    ConfidentialToken(name_, symbol_) 
+    )
+    ConfidentialToken(name_, symbol_)
     {
         identityContract = Identity(_identityContract);
         transferRulesContract = TransferRules(_transferRulesContract);
@@ -25,14 +24,14 @@ contract CompliantConfidentialERC20 is ConfidentialToken {
 
     // Overridden transfer function handling encrypted inputs
     function transfer(
-        address to, 
-        einput encryptedAmount, 
+        address to,
+        einput encryptedAmount,
         bytes calldata inputProof
-    ) 
-        public 
-        virtual 
-        override 
-        returns (bool) 
+    )
+        public
+        virtual
+        override
+        returns (bool)
     {
         euint64 amount = TFHE.asEuint64(encryptedAmount, inputProof);
         return transfer(to, amount);
@@ -40,18 +39,18 @@ contract CompliantConfidentialERC20 is ConfidentialToken {
 
     // Internal transfer function applying the transfer rules
     function transfer(
-        address to, 
+        address to,
         euint64 amount
-    ) 
-        public 
-        override 
-        returns (bool) 
+    )
+        public
+        override
+        returns (bool)
     {
         require(TFHE.isSenderAllowed(amount), "Sender not allowed");
 
         ebool hasEnough = TFHE.le(amount, _balances[msg.sender]);
         euint64 transferAmount = TFHE.select(hasEnough, amount, TFHE.asEuint64(0));
-        
+
         // Apply transfer rules
         TFHE.allow(transferAmount, address(transferRulesContract));
         ebool rulesPassed = transferRulesContract.transfer(msg.sender, to, transferAmount);
@@ -59,17 +58,17 @@ contract CompliantConfidentialERC20 is ConfidentialToken {
 
         TFHE.allow(transferAmount, address(this));
         _transfer(msg.sender, to, transferAmount);
-        
+
         return true;
     }
 
     // Internal transfer function with encrypted balances
     function _transfer(
-        address from, 
-        address to, 
+        address from,
+        address to,
         euint64 _amount
-    ) 
-        internal 
+    )
+        internal
     {
         euint64 newBalanceFrom = TFHE.sub(_balances[from], _amount);
         _balances[from] = newBalanceFrom;

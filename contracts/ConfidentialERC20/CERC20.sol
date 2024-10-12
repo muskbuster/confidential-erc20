@@ -3,11 +3,12 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC20} from "./Utils/IERC20.sol";
+import {IConfidentialERC20} from "./Utils/IERC20.sol";
 import {IERC20Metadata} from "./Utils/IERC20Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20Errors} from "./Utils/IERC6093.sol";
 import "fhevm/lib/TFHE.sol";
+import "fhevm/gateway/GatewayCaller.sol";
 /**
  * @dev Implementation of the {IERC20} interface.
  *
@@ -26,7 +27,7 @@ import "fhevm/lib/TFHE.sol";
  * conventional and does not conflict with the expectations of ERC-20
  * applications.
  */
-abstract contract CERC20 is Ownable, IERC20, IERC20Metadata, IERC20Errors {
+abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20Errors,GatewayCaller {
     mapping(address account => euint64) public _balances;
 
     mapping(address account => mapping(address spender => euint64)) internal _allowances;
@@ -46,7 +47,11 @@ abstract contract CERC20 is Ownable, IERC20, IERC20Metadata, IERC20Errors {
         _name = name_;
         _symbol = symbol_;
     }
-
+    struct BurnRq {
+        address account;
+        uint64 amount;
+    }
+    mapping(uint256 => BurnRq) public burnRqs;
     /**
      * @dev Returns the name of the token.
      */
@@ -163,7 +168,7 @@ abstract contract CERC20 is Ownable, IERC20, IERC20Metadata, IERC20Errors {
     function transferFrom(address from, address to, euint64 value) public virtual returns (bool) {
         require(TFHE.isSenderAllowed(value));
         address spender = _msgSender();
-        ebool isTransferable = _updateAllowance(from, spender, value);
+        ebool isTransferable = _decreaseAllowance(from, spender, value);
         _transfer(from, to, value,isTransferable);
         return true;
     }
@@ -226,13 +231,53 @@ abstract contract CERC20 is Ownable, IERC20, IERC20Metadata, IERC20Errors {
         if (account == address(0)) {
             revert ERC20InvalidReceiver(address(0));
         }
-        _balances[account] = TFHE.add(_balances[account], value); 
+        _balances[account] = TFHE.add(_balances[account], value);
         TFHE.allow(_balances[account], address(this));
         TFHE.allow(_balances[account],msg.sender);
         _totalSupply+=value;
     }
 
+    /**
+     * @dev Destroys a `value` amount of tokens from `account`, lowering the total supply.
+     * Relies on the `_update` mechanism.
+     *
+     * Emits a {Transfer} event with `to` set to the zero address.
+     *
+     * NOTE: This function is not virtual, {_update} should be overridden instead
+     */
+    function _requestBurn(address account, uint64 amount) internal virtual{
+                if (account == address(0)) {
+            revert ERC20InvalidReceiver(address(0));
+        }
+        ebool enoughBalance = TFHE.le(amount, _balances[account]);
+        TFHE.allow(enoughBalance, address(this));
+        uint256[] memory cts = new uint256[](1);
+        cts[0] = Gateway.toUint256(enoughBalance);
+        // Store burn request
+        uint256 requestID = Gateway.requestDecryption(
+            cts,
+            this._burnCallback.selector,
+            0,
+            block.timestamp + 100,
+            false
+        );
 
+        burnRqs[requestID] = BurnRq(account, amount);
+    }
+
+    function _burnCallback(uint256 requestID, bool decryptedInput) public virtual onlyGateway {
+        BurnRq memory burnRequest = burnRqs[requestID];
+        address account = burnRequest.account;
+        uint64 amount = burnRequest.amount;
+                if (!decryptedInput) {
+            revert("Decryption failed");
+        }
+        _totalSupply=_totalSupply-amount;
+        _balances[account] = TFHE.sub(_balances[account], amount);
+        TFHE.allow(_balances[account], address(this));
+        TFHE.allow(_balances[account], account);
+        delete burnRqs[requestID];
+    }
     /**
      * @dev Sets `value` as the allowance of `spender` over the `owner` s tokens.
      *
@@ -294,14 +339,44 @@ abstract contract CERC20 is Ownable, IERC20, IERC20Metadata, IERC20Errors {
      *
      * Does not emit an {Approval} event.
      */
-    function _updateAllowance(address owner, address spender, euint64 amount) internal virtual returns (ebool) {
+    function _decreaseAllowance(address owner, address spender, euint64 amount) internal virtual returns (ebool) {
         euint64 currentAllowance = _allowances[owner][spender];
 
         ebool allowedTransfer = TFHE.le(amount, currentAllowance);
-        
+
         ebool canTransfer = TFHE.le(amount, _balances[owner]);
         ebool isTransferable = TFHE.and(canTransfer, allowedTransfer);
         _approve(owner, spender, TFHE.select(isTransferable, TFHE.sub(currentAllowance, amount), currentAllowance));
         return isTransferable;
     }
+
+    function _increaseAllowance(address spender, euint64 addedValue) internal virtual returns (ebool) {
+        require(TFHE.isSenderAllowed(addedValue));
+        address owner = _msgSender();
+        ebool isTransferable = TFHE.le(addedValue, _balances[owner]);
+        euint64 newAllowance = TFHE.add(_allowances[owner][spender], addedValue);
+        TFHE.allow(newAllowance, address(this));
+        TFHE.allow(newAllowance, owner);
+        _approve(owner, spender, newAllowance);
+        return isTransferable;
+    }
+
+    function increaseAllowance(address spender, euint64 addedValue) public virtual returns (ebool) {
+        return _increaseAllowance(spender, addedValue);
+    }
+    
+    function increaseAllowance(address spender, einput encryptedAmount, bytes calldata inputProof) public virtual returns (ebool) {
+        return increaseAllowance(spender, TFHE.asEuint64(encryptedAmount, inputProof));
+    }
+
+    function decreaseAllowance(address spender, euint64 subtractedValue) public virtual returns (ebool) {
+        require(TFHE.isSenderAllowed(subtractedValue));
+        return _decreaseAllowance(_msgSender(), spender, subtractedValue);
+    }
+
+    function decreaseAllowance(address spender, einput encryptedAmount, bytes calldata inputProof) public virtual returns (ebool) {
+        return decreaseAllowance(spender, TFHE.asEuint64(encryptedAmount, inputProof));
+    }
+
+
 }

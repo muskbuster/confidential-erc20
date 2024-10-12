@@ -32,7 +32,7 @@ contract ConfidentialToken is CERC20 {
      */
     function burn(address from, uint64 amount) public {
         require(msg.sender == _owner, "Only owner");
-        _burn(from, amount);
+        burn(from, amount);
     }
 
     /**

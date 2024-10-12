@@ -35,9 +35,9 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
     const wrapTx = await this.wrapperContract.connect(this.signers.alice).wrap(wrapAmount);
     await wrapTx.wait();
 
-   
-    const balance = await this.normalERC.balanceOf(this.signers.alice.address);  
-    expect(balance).to.equal(900);  
+
+    const balance = await this.normalERC.balanceOf(this.signers.alice.address);
+    expect(balance).to.equal(900);
 
 
 
@@ -54,9 +54,9 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
     await transferTx.wait();
 
     // Reencrypt Alice's balance in the wrapper contract
-    const balanceHandleAlice = await this.wrapperContract.balanceOf(this.signers.alice.address); 
+    const balanceHandleAlice = await this.wrapperContract.balanceOf(this.signers.alice.address);
     const { publicKey: publicKeyAlice, privateKey: privateKeyAlice } = this.instances.alice.generateKeypair();
-    
+
     const eip712 = this.instances.alice.createEIP712(publicKeyAlice, this.wrapperAddress);
     const signatureAlice = await this.signers.alice.signTypedData(
       eip712.domain,
@@ -68,15 +68,15 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
       privateKeyAlice,
       publicKeyAlice,
       signatureAlice.replace("0x", ""),
-      this.wrapperAddress, 
-      this.signers.alice.address, 
+      this.wrapperAddress,
+      this.signers.alice.address,
     );
 
-    expect(balanceAlice).to.equal(50); 
+    expect(balanceAlice).to.equal(50);
   });
 
   it("should successfully unwrap tokens", async function () {
-  
+
     const wrapAmount = 100;
 
     // Set allowance for wrapping
@@ -93,9 +93,9 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
     const wrapTx = await this.wrapperContract.connect(this.signers.alice).wrap(wrapAmount);
     await wrapTx.wait();
 
-   
-    const balance = await this.normalERC.balanceOf(this.signers.alice.address);  
-    expect(balance).to.equal(900);  
+
+    const balance = await this.normalERC.balanceOf(this.signers.alice.address);
+    expect(balance).to.equal(900);
 
 
 
@@ -114,14 +114,14 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
     const unwrapTrx = await this.wrapperContract.connect(this.signers.alice).unwrap(20);
     await unwrapTrx.wait();
    const decrypt= await awaitAllDecryptionResults();
+   await decrypt;
     console.log(decrypt);
-    const newbalance = await this.normalERC.balanceOf(this.signers.alice.address);  
-    expect(newbalance).to.equal(920); 
+    const newbalance = await this.normalERC.balanceOf(this.signers.alice.address);
+    expect(newbalance).to.equal(920);
 
-    
-    
 
-});
+
 
 });
 
+});

@@ -14,7 +14,7 @@ describe("CompliantConfidentialERC20 Contract Tests", function () {
   beforeEach(async function () {
     // Deploy the ERC20, Identity, and TransferRules contracts
     const { contract, identity, transferRules } = await deployCompliantERC20Fixture();
-    
+
     // Store the contract address and instance for future use
     this.contractAddress = await contract.getAddress();
     this.erc20 = contract;
@@ -27,24 +27,26 @@ describe("CompliantConfidentialERC20 Contract Tests", function () {
     const transaction = await this.erc20.mint(this.signers.alice.address,1000);
     await transaction.wait();
     const input = this.instances.alice.createEncryptedInput(this.identityAddress, this.signers.alice.address);
-    input.add8(2); 
+    input.add8(29);
     const encryptedCode = input.encrypt();
-    
+
     // Update Alice's identity
     const updateAliceCodeTx = await this.identity.registerIdentity(
         this.signers.alice.address,
         encryptedCode.handles[0],
         encryptedCode.inputProof
     );
-    await updateAliceCodeTx.wait(); 
+    await updateAliceCodeTx.wait();
     const inputBob = this.instances.bob.createEncryptedInput(this.identityAddress, this.signers.bob.address);
-    inputBob.add8(2); 
+    inputBob.add8(25);
     const encryptedCodeBob = inputBob.encrypt();
     const updateBobCodeTx = await this.identity.registerIdentity(
       this.signers.bob.address,
       encryptedCodeBob.handles[0],
       encryptedCodeBob.inputProof
   );
+  const setAgeLimitTx = await this.transferRules.setMinimumAge(18);
+  await setAgeLimitTx.wait();
   await updateBobCodeTx.wait();
   });
 
@@ -100,12 +102,12 @@ it("Should check for transfer rules", async function () {
   );
   await tx.wait();
 
-  // reencrypt code 
+  // reencrypt code
 
 });
 
 it("Should not change balance of Bob or Alice if Bob is blacklisted", async function () {
-  
+
   await this.transferRules.setBlacklist(this.signers.bob.address, true);
 
 
