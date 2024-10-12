@@ -10,7 +10,6 @@ import "./TransferRules.sol";
 contract CompliantConfidentialERC20 is ConfidentialToken {
     Identity public identityContract;
     TransferRules public transferRulesContract;
-
     constructor(
         string memory name_,
         string memory symbol_,

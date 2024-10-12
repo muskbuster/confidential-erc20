@@ -168,7 +168,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
     function transferFrom(address from, address to, euint64 value) public virtual returns (bool) {
         require(TFHE.isSenderAllowed(value));
         address spender = _msgSender();
-        ebool isTransferable = _updateAllowance(from, spender, value);
+        ebool isTransferable = _decreaseAllowance(from, spender, value);
         _transfer(from, to, value,isTransferable);
         return true;
     }
@@ -339,7 +339,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
      *
      * Does not emit an {Approval} event.
      */
-    function _updateAllowance(address owner, address spender, euint64 amount) internal virtual returns (ebool) {
+    function _decreaseAllowance(address owner, address spender, euint64 amount) internal virtual returns (ebool) {
         euint64 currentAllowance = _allowances[owner][spender];
 
         ebool allowedTransfer = TFHE.le(amount, currentAllowance);
@@ -349,4 +349,34 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
         _approve(owner, spender, TFHE.select(isTransferable, TFHE.sub(currentAllowance, amount), currentAllowance));
         return isTransferable;
     }
+
+    function _increaseAllowance(address spender, euint64 addedValue) internal virtual returns (ebool) {
+        require(TFHE.isSenderAllowed(addedValue));
+        address owner = _msgSender();
+        ebool isTransferable = TFHE.le(addedValue, _balances[owner]);
+        euint64 newAllowance = TFHE.add(_allowances[owner][spender], addedValue);
+        TFHE.allow(newAllowance, address(this));
+        TFHE.allow(newAllowance, owner);
+        _approve(owner, spender, newAllowance);
+        return isTransferable;
+    }
+
+    function increaseAllowance(address spender, euint64 addedValue) public virtual returns (ebool) {
+        return _increaseAllowance(spender, addedValue);
+    }
+    
+    function increaseAllowance(address spender, einput encryptedAmount, bytes calldata inputProof) public virtual returns (ebool) {
+        return increaseAllowance(spender, TFHE.asEuint64(encryptedAmount, inputProof));
+    }
+
+    function decreaseAllowance(address spender, euint64 subtractedValue) public virtual returns (ebool) {
+        require(TFHE.isSenderAllowed(subtractedValue));
+        return _decreaseAllowance(_msgSender(), spender, subtractedValue);
+    }
+
+    function decreaseAllowance(address spender, einput encryptedAmount, bytes calldata inputProof) public virtual returns (ebool) {
+        return decreaseAllowance(spender, TFHE.asEuint64(encryptedAmount, inputProof));
+    }
+
+
 }
