@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import * as fs from "fs-extra";
 import "hardhat-deploy";
 import "hardhat-ignore-warnings";
-import type { HardhatUserConfig } from "hardhat/config";
+import { HardhatUserConfig, extendEnvironment } from "hardhat/config";
 import { extendProvider } from "hardhat/config";
 import { task } from "hardhat/config";
 import type { NetworkUserConfig } from "hardhat/types";
@@ -11,7 +11,7 @@ import { resolve } from "path";
 import * as path from "path";
 
 import CustomProvider from "./CustomProvider";
-// Adjust the import path as needed
+import "./hardhat.config.types";
 import "./tasks/accounts";
 import "./tasks/getEthereumAddress";
 import "./tasks/taskDeploy";
@@ -21,6 +21,10 @@ import "./tasks/taskTFHE";
 extendProvider(async (provider) => {
   const newProvider = new CustomProvider(provider);
   return newProvider;
+});
+
+extendEnvironment((hre) => {
+  hre.__SOLIDITY_COVERAGE_RUNNING = false;
 });
 
 task("compile:specific", "Compiles only the specified contract")
@@ -45,12 +49,18 @@ const chainIds = {
   Inco: 9000,
   local: 9000,
   localNetwork1: 9000,
+  rivest: 9000,
   multipleValidatorTestnet: 8009,
 };
 
 function getChainConfig(chain: keyof typeof chainIds): NetworkUserConfig {
   let jsonRpcUrl: string;
+  let gatewayUrl: string = "http://localhost:7077";
   switch (chain) {
+    case "rivest":
+      jsonRpcUrl = "https://validator.rivest.inco.org";
+      gatewayUrl = "https://gateway.rivest.inco.org";
+      break;
     case "local":
       jsonRpcUrl = "http://localhost:8545";
       break;
@@ -72,6 +82,7 @@ function getChainConfig(chain: keyof typeof chainIds): NetworkUserConfig {
     },
     chainId: chainIds[chain],
     url: jsonRpcUrl,
+    gatewayUrl,
   };
 }
 
@@ -143,6 +154,7 @@ const config: HardhatUserConfig = {
     local: getChainConfig("local"),
     localNetwork1: getChainConfig("localNetwork1"),
     multipleValidatorTestnet: getChainConfig("multipleValidatorTestnet"),
+    rivest: getChainConfig("rivest"),
   },
   paths: {
     artifacts: "./artifacts",

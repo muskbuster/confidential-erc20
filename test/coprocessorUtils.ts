@@ -1,4 +1,6 @@
+import crypto from "crypto";
 import dotenv from "dotenv";
+import { FunctionFragment } from "ethers";
 import { log2 } from "extra-bigint";
 import * as fs from "fs";
 import { ethers } from "hardhat";
@@ -19,13 +21,13 @@ const contractABI = JSON.parse(fs.readFileSync("abi/TFHEExecutor.json").toString
 
 const iface = new ethers.Interface(contractABI);
 
-const functions = iface.fragments.filter((fragment) => fragment.type === "function");
+const functions = iface.fragments.filter((fragment): fragment is FunctionFragment => fragment.type === "function");
 
 const selectors = functions.reduce((acc, func) => {
   const signature = `${func.name}(${func.inputs.map((input) => input.type).join(",")})`;
   acc[func.selector] = signature;
   return acc;
-}, {});
+}, {} as Record<string, string>);
 
 //const db = new Database('./sql.db'); // on-disk db for debugging
 const db = new Database(":memory:");
@@ -38,6 +40,10 @@ function insertSQL(handle: string, clearText: bigint, replace: boolean = false) 
     db.run("INSERT OR IGNORE INTO ciphertexts (handle, clearText) VALUES (?, ?)", [handle, clearText.toString()]);
   }
 }
+
+type Row = {
+  clearText: string;
+};
 
 // Decrypt any handle, bypassing ACL
 // WARNING : only for testing or internal use
@@ -53,7 +59,8 @@ export const getClearText = async (handle: bigint): Promise<string> => {
         if (err) {
           reject(new Error(`Error querying database: ${err.message}`));
         } else if (row) {
-          resolve(row.clearText);
+          // FIXME: parse rather than assert
+          resolve((row as Row).clearText);
         } else if (attempts < maxRetries) {
           attempts++;
           executeQuery();
@@ -148,6 +155,17 @@ const NumBits = {
   11: 2048n, //ebytes256
 };
 
+function isNumBitsType(type: number): type is keyof typeof NumBits {
+  return type in NumBits;
+}
+
+function mustGetNumBitsType(type: number): keyof typeof NumBits {
+  if (!isNumBitsType(type)) {
+    throw new Error(`Invalid type: ${type}`);
+  }
+  return type;
+}
+
 const HANDLE_VERSION = 0;
 
 export function numberToEvenHexString(num: number) {
@@ -181,9 +199,9 @@ function getRandomBigInt(numBits: number): bigint {
   return randomBigInt;
 }
 
-async function insertHandle(obj2: EvmState, validIdxes: [number]) {
+async function insertHandle(obj2: { value: EvmState; index: number }, validIdxes: [number]) {
   const obj = obj2.value;
-  if (isCoprocAdd(obj!.stack.at(-2))) {
+  if (isCoprocAdd(obj.stack.at(-2))) {
     const argsOffset = Number(`0x${obj!.stack.at(-4)}`);
     const argsSize = Number(`0x${obj!.stack.at(-5)}`);
     const calldata = extractCalldata(obj.memory, argsOffset, argsSize);
@@ -220,7 +238,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -242,7 +260,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -266,7 +284,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -288,7 +306,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -307,7 +325,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -326,7 +344,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -348,7 +366,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -370,7 +388,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -392,7 +410,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -414,7 +432,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
         if (decodedData[2] === "0x01") {
@@ -436,7 +454,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
 
@@ -461,7 +479,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
           ),
         );
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = appendType(handle, resultType);
         clearLHS = await getClearText(decodedData[0]);
 
@@ -588,7 +606,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
 
       case "fheMax(uint256,uint256,bytes1)":
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = ethers.keccak256(
           ethers.solidityPacked(
             ["uint8", "uint256", "uint256", "bytes1"],
@@ -608,7 +626,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
 
       case "fheMin(uint256,uint256,bytes1)":
         lhsType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
-        resultType = lhsType;
+        resultType = mustGetNumBitsType(lhsType);
         handle = ethers.keccak256(
           ethers.solidityPacked(
             ["uint8", "uint256", "uint256", "bytes1"],
@@ -627,7 +645,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
         break;
 
       case "cast(uint256,bytes1)":
-        resultType = parseInt(decodedData[1]);
+        resultType = mustGetNumBitsType(parseInt(decodedData[1]));
         handle = ethers.keccak256(
           ethers.solidityPacked(["uint8", "uint256", "bytes1"], [Operators.cast, decodedData[0], decodedData[1]]),
         );
@@ -637,7 +655,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
         break;
 
       case "fheNot(uint256)":
-        resultType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
+        resultType = mustGetNumBitsType(parseInt(decodedData[0].toString(16).slice(-4, -2), 16));
         handle = ethers.keccak256(ethers.solidityPacked(["uint8", "uint256"], [Operators.fheNot, decodedData[0]]));
         handle = appendType(handle, resultType);
         clearText = BigInt(await getClearText(decodedData[0]));
@@ -646,7 +664,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
         break;
 
       case "fheNeg(uint256)":
-        resultType = parseInt(decodedData[0].toString(16).slice(-4, -2), 16);
+        resultType = mustGetNumBitsType(parseInt(decodedData[0].toString(16).slice(-4, -2), 16));
         handle = ethers.keccak256(ethers.solidityPacked(["uint8", "uint256"], [Operators.fheNeg, decodedData[0]]));
         handle = appendType(handle, resultType);
         clearText = BigInt(await getClearText(decodedData[0]));
@@ -658,7 +676,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
       case "verifyCiphertext(bytes32,address,bytes,bytes1)":
         {
           handle = decodedData[0];
-          const type = parseInt(handle.slice(-4, -2), 16);
+          const type = mustGetNumBitsType(parseInt(handle.slice(-4, -2), 16));
           if (type !== 11) {
             //not an ebytes256
             const typeSize = TypesBytesSize[type];
@@ -698,7 +716,7 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
 
       case "fheRand(bytes1)":
         if (validIdxes.includes(obj2.index)) {
-          resultType = parseInt(decodedData[0], 16);
+          resultType = mustGetNumBitsType(parseInt(decodedData[0], 16));
           handle = ethers.keccak256(
             ethers.solidityPacked(["uint8", "bytes1", "uint256"], [Operators.fheRand, decodedData[0], counterRand]),
           );
@@ -729,26 +747,24 @@ async function insertHandle(obj2: EvmState, validIdxes: [number]) {
 }
 
 function bitwiseNotUintBits(value: bigint, numBits: number) {
-  if (typeof value !== "bigint") {
-    throw new TypeError("The input value must be a BigInt.");
-  }
-  if (typeof numBits !== "number" || numBits <= 0) {
-    throw new TypeError("The numBits parameter must be a positive integer.");
-  }
-
   // Create the mask with numBits bits set to 1
   const BIT_MASK = (BigInt(1) << BigInt(numBits)) - BigInt(1);
 
   return ~value & BIT_MASK;
 }
 
-function isCoprocAdd(longString: string): boolean {
+function isCoprocAdd(longString: string | undefined): boolean {
+  if (!longString) {
+    return false;
+  }
   const strippedLongString = longString.replace(/^0+/, "");
   const normalizedLongString = strippedLongString.toLowerCase();
   return normalizedLongString === coprocAdd;
 }
 
-async function processLogs(trace, validSubcallsIndexes) {
+// FIXME: code below needs proper typing
+
+async function processLogs(trace, validSubcallsIndexes: number[]) {
   for (const obj of trace.structLogs
     .map((value, index) => ({ value, index }))
     .filter((obj) => obj.value.op === "CALL")) {
@@ -774,7 +790,7 @@ async function getAllPastTransactionHashes() {
   const latestBlockNumber = await provider.getBlockNumber();
   const txHashes = [];
 
-  if (hre.__SOLIDITY_COVERAGE_RUNNING !== true) {
+  if (!hre.__SOLIDITY_COVERAGE_RUNNING) {
     // evm_snapshot is not supported in coverage mode
     [lastBlockSnapshot, lastCounterRand] = await provider.send("get_lastBlockSnapshot");
     if (lastBlockSnapshot < firstBlockListening) {
@@ -788,11 +804,11 @@ async function getAllPastTransactionHashes() {
     const block = await provider.getBlock(i, true);
     block!.transactions.forEach((tx, index) => {
       const rcpt = block?.prefetchedTransactions[index];
-      txHashes.push([tx, { to: rcpt.to, status: rcpt.status }]);
+      txHashes.push([tx, { to: rcpt?.to, status: rcpt?.status }]);
     });
   }
   firstBlockListening = latestBlockNumber + 1;
-  if (hre.__SOLIDITY_COVERAGE_RUNNING !== true) {
+  if (!hre.__SOLIDITY_COVERAGE_RUNNING) {
     // evm_snapshot is not supported in coverage mode
     await provider.send("set_lastBlockSnapshot", [firstBlockListening]);
   }

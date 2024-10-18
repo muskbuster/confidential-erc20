@@ -1,6 +1,7 @@
 import { clientKeyDecryptor, createInstance as createFhevmInstance, getCiphertextCallParams } from "fhevmjs";
 import { readFileSync } from "fs";
 import { ethers, ethers as hethers, network } from "hardhat";
+import { HttpNetworkConfig, NetworkConfig } from "hardhat/types";
 import { homedir } from "os";
 import path from "path";
 
@@ -42,12 +43,19 @@ export const createInstances = async (accounts: Signers): Promise<FhevmInstances
   return instances;
 };
 
+function isHttpNetworkConfig(config: NetworkConfig): config is HttpNetworkConfig {
+  return "url" in config;
+}
+
 export const createInstance = async () => {
-  const instance = await createFhevmInstance({
-    networkUrl: network.config.url,
-    gatewayUrl: "https://gateway.rivest.inco.org",
+  const config = network.config;
+  if (!isHttpNetworkConfig(config)) {
+    throw new Error("Only HTTP network config is supported for FhevmInstance");
+  }
+  return await createFhevmInstance({
+    networkUrl: config.url,
+    gatewayUrl: config.gatewayUrl,
   });
-  return instance;
 };
 
 const getCiphertext = async (handle: bigint, ethers: typeof hethers): Promise<string> => {
@@ -99,7 +107,7 @@ export const decrypt4 = async (handle: bigint): Promise<bigint> => {
     await awaitCoprocessor();
     return BigInt(await getClearText(handle));
   } else {
-    return getDecryptor().decrypt4(await getCiphertext(handle, ethers));
+    return BigInt(getDecryptor().decrypt4(await getCiphertext(handle, ethers)));
   }
 };
 
@@ -117,7 +125,7 @@ export const decrypt8 = async (handle: bigint): Promise<bigint> => {
     await awaitCoprocessor();
     return BigInt(await getClearText(handle));
   } else {
-    return getDecryptor().decrypt8(await getCiphertext(handle, ethers));
+    return BigInt(getDecryptor().decrypt8(await getCiphertext(handle, ethers)));
   }
 };
 
@@ -135,7 +143,7 @@ export const decrypt16 = async (handle: bigint): Promise<bigint> => {
     await awaitCoprocessor();
     return BigInt(await getClearText(handle));
   } else {
-    return getDecryptor().decrypt16(await getCiphertext(handle, ethers));
+    return BigInt(getDecryptor().decrypt16(await getCiphertext(handle, ethers)));
   }
 };
 
@@ -153,7 +161,7 @@ export const decrypt32 = async (handle: bigint): Promise<bigint> => {
     await awaitCoprocessor();
     return BigInt(await getClearText(handle));
   } else {
-    return getDecryptor().decrypt32(await getCiphertext(handle, ethers));
+    return BigInt(getDecryptor().decrypt32(await getCiphertext(handle, ethers)));
   }
 };
 
