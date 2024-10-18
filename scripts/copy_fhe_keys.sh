@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This bash script creates global fhe keys
 # and copy them to the right folder in volumes directory.
-# It accepts 
+# It accepts
 # - the version of kms-dev as the first parameter
 # - the LOCAL_BUILD_PUBLIC_KEY_PATH as the second optional parameter.
 # - the LOCAL_BUILD_PRIVATE_KEY_PATH as the third optional parameter.
