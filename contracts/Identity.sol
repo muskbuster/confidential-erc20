@@ -4,11 +4,10 @@ import "fhevm/lib/TFHE.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Identity is Ownable {
-    mapping(address => euint8) private countryCode;
     mapping(address => bool) private isRegistered;
     mapping(address => euint8) private Age;
     event IdentityRegistered(address indexed user);
-    event CountryCodeUpdated(address indexed user);
+    event AgeUpdated(address indexed user);
 
     constructor() Ownable(msg.sender) {}
 
@@ -30,27 +29,11 @@ contract Identity is Ownable {
         euint8 age = TFHE.asEuint8(encryptedAge, inputProof);
         Age[user] = age;
 
-        // Allow access to the updated encrypted country code
+        // Allow access to the updated encrypted age
         TFHE.allow(Age[user], msg.sender);
         TFHE.allow(Age[user],address(this));
 
-        emit CountryCodeUpdated(msg.sender);
-    }
-
-
-    function checkSameCountry(address from, address to) public  returns (ebool) {
-        require(isRegistered[from], "From address is not registered");
-        require(isRegistered[to], "To address is not registered");
-
-        euint8 fromCountry = countryCode[from];
-        euint8 toCountry = countryCode[to];
-
-        ebool result = TFHE.eq(fromCountry, toCountry);
-
-        // Allow querying contract to access the result
-        TFHE.allow(result, msg.sender);
-
-        return result;
+        emit AgeUpdated(msg.sender);
     }
 
     function checkAgeRequirement(address from,address to, uint8 minAge) public  returns (ebool) {

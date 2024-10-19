@@ -5,7 +5,7 @@ import "./CERC20.sol";
 import "fhevm/lib/TFHE.sol";
 
 /**
- * @dev Implementation of the {IncoERC20} contract, providing minting and additional functionality.
+ * @dev Example Implementation of the {ConfidentialERC20} contract, providing minting and additional functionality.
  */
 contract ConfidentialToken is CERC20 {
     address private _owner;

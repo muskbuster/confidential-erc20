@@ -43,35 +43,14 @@ contract TransferRules is Ownable2Step {
       ebool belowLimit = TFHE.le(amount,20000000000);
        TFHE.allow(belowLimit,address(this));
        // check if below limit and age condition is true
-         ebool transferAllowed = ageCondition;//TFHE.and(belowLimit, ageCondition);
+         ebool transferAllowed = TFHE.and(belowLimit, ageCondition);
         // euint64 result = TFHE.select(transferAllowed, amount, TFHE.asEuint64(0));
         TFHE.allow(transferAllowed,address(this));
         TFHE.allow(transferAllowed, msg.sender);
         return transferAllowed;
     }
 
-
-
-
-
-    function mint(address to, euint64 amount) public returns (ebool) {
-        // Condition 1: Check if the user is blacklisted
-        if (userBlocklist[to]) {
-            revert AddressBlacklisted(to);
-        }
-        ebool belowMintLimit = TFHE.le(amount, TRANSFER_LIMIT);
-
-
-        ebool mintAllowed = TFHE.and(TFHE.asEbool(true), belowMintLimit);
-        euint64 mintAmount = TFHE.select(mintAllowed, amount, TFHE.asEuint64(0));
-
-        // Allow the result to be accessible
-        TFHE.allow(mintAllowed, address(this));
-        TFHE.allow(mintAllowed, msg.sender);
-
-        return mintAllowed;
-    }
-
+    
     function setBlacklist(address user, bool isBlacklisted) onlyOwner() external {
         require(user != address(0), "Invalid address");
         userBlocklist[user] = isBlacklisted;

@@ -101,9 +101,6 @@ it("Should check for transfer rules", async function () {
     encryptedTransferAmount.inputProof,
   );
   await tx.wait();
-
-  // reencrypt code
-
 });
 
 it("Should not change balance of Bob or Alice if Bob is blacklisted", async function () {

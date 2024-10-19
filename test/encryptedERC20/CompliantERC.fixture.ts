@@ -1,10 +1,10 @@
 import { ethers } from "hardhat";
 
-import type { EncryptedERC20, Identity, TransferRules } from "../../types";
+import type { CompliantConfidentialERC20, Identity, TransferRules } from "../../types";
 import { getSigners } from "../signers";
 
 export async function deployCompliantERC20Fixture(): Promise<{
-  contract: EncryptedERC20;
+  contract: CompliantConfidentialERC20;
   identity: Identity;
   transferRules: TransferRules;
 }> {
@@ -24,9 +24,9 @@ export async function deployCompliantERC20Fixture(): Promise<{
 
   // Deploy the CompliantConfidentialERC20 contract
   const contract = await contractFactory.connect(signers.alice).deploy(
-    "CERC20", 
-    "C20", 
-    identity.target, 
+    "CERC20",
+    "C20",
+    identity.target,
     transferRules.target
   );
   await contract.waitForDeployment();
@@ -34,11 +34,9 @@ export async function deployCompliantERC20Fixture(): Promise<{
   console.log(contract.target, identity.target, transferRules.target);
 
   // Return all contracts
-  return { 
-    contract, 
-    identity, 
-    transferRules 
+  return {
+    contract,
+    identity,
+    transferRules
   };
 }
-
-  

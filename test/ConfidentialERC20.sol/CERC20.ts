@@ -17,7 +17,7 @@ describe("Confidential ERC20 tests", function () {
     this.instances = await createInstances(this.signers);
   });
 
-  it("should mint the contract", async function () {
+  it("should mint to alice", async function () {
     const transaction = await this.erc20.mint(this.signers.alice,1000);
     await transaction.wait();
 
@@ -184,7 +184,7 @@ describe("Confidential ERC20 tests", function () {
     await tx2.wait();
 
     // Decrypt Alice's balance
-    const balanceHandleAlice = await this.erc20.balanceOf(this.signers.alice);
+
     const { publicKey: publicKeyAlice, privateKey: privateKeyAlice } = this.instances.alice.generateKeypair();
     const eip712 = this.instances.alice.createEIP712(publicKeyAlice, this.contractAddress);
     const signatureAlice = await this.signers.alice.signTypedData(
@@ -192,18 +192,8 @@ describe("Confidential ERC20 tests", function () {
       { Reencrypt: eip712.types.Reencrypt },
       eip712.message,
     );
-    // const balanceAlice = await this.instances.alice.reencrypt(
-    //   balanceHandleAlice,
-    //   privateKeyAlice,
-    //   publicKeyAlice,
-    //   signatureAlice.replace("0x", ""),
-    //   this.contractAddress,
-    //   this.signers.alice.address,
-    // );
-    // expect(balanceAlice).to.equal(10000); // check that transfer did not happen, as expected
 
-    // // Decrypt Bob's balance
-    const balanceHandleBob = await this.erc20.balanceOf(this.signers.bob);
+
     const { publicKey: publicKeyBob, privateKey: privateKeyBob } = this.instances.bob.generateKeypair();
     const eip712Bob = this.instances.bob.createEIP712(publicKeyBob, this.contractAddress);
     const signatureBob = await this.signers.bob.signTypedData(
@@ -211,15 +201,6 @@ describe("Confidential ERC20 tests", function () {
       { Reencrypt: eip712Bob.types.Reencrypt },
       eip712Bob.message,
     );
-    // const balanceBob = await this.instances.bob.reencrypt(
-    //   balanceHandleBob,
-    //   privateKeyBob,
-    //   publicKeyBob,
-    //   signatureBob.replace("0x", ""),
-    //   this.contractAddress,
-    //   this.signers.bob.address,
-    // );
-    // expect(balanceBob).to.equal(0); // check that transfer did not happen, as expected
 
     const inputBob2 = this.instances.bob.createEncryptedInput(this.contractAddress, this.signers.bob.address);
     inputBob2.add64(1337); // below allowance so next tx should send token

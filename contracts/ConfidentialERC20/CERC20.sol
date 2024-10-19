@@ -19,7 +19,7 @@ import "fhevm/gateway/GatewayCaller.sol";
  * https://forum.openzeppelin.com/t/how-to-implement-erc20-supply-mechanisms/226[How
  * to implement supply mechanisms].
  *
- * The default value of {decimals} is 18. To change this, you should override
+ * The default value of {decimals} is 6. To change this, you should override
  * this function so it returns a different value.
  *
  * We have followed general OpenZeppelin Contracts guidelines: functions revert
@@ -81,7 +81,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
     function decimals() public view virtual returns (uint8) {
-        return 18;
+        return 6;
     }
 
     /**
@@ -152,11 +152,8 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
     /**
      * @dev See {IERC20-transferFrom}.
      *
-     * Skips emitting an {Approval} event indicating an allowance update. This is not
-     * required by the ERC. See {xref-ERC20-_approve-address-address-uint256-bool-}[_approve].
-     *
      * NOTE: Does not update the allowance if the current allowance
-     * is the maximum `uint256`.
+     * is the maximum `uint64`.
      *
      * Requirements:
      *
@@ -308,7 +305,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
      * true using the following override:
      *
      * ```solidity
-     * function _approve(address owner, address spender, uint256 value, bool) internal virtual override {
+     * function _approve(address owner, address spender, euint64 value, bool) internal virtual override {
      *     super._approve(owner, spender, value, true);
      * }
      * ```
@@ -332,10 +329,8 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
     }
 
     /**
-     * @dev Updates `owner` s allowance for `spender` based on spent `value`.
+     * @dev Reduces `owner` s allowance for `spender` based on spent `value`.
      *
-     * Does not update the allowance value in case of infinite allowance.
-     * Revert if not enough allowance is available.
      *
      * Does not emit an {Approval} event.
      */
@@ -349,7 +344,12 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
         _approve(owner, spender, TFHE.select(isTransferable, TFHE.sub(currentAllowance, amount), currentAllowance));
         return isTransferable;
     }
-
+    /**
+     * @dev Increases `owner` s allowance for `spender` based on spent `value`.
+     *
+     *
+     * Does not emit an {Approval} event.
+     */
     function _increaseAllowance(address spender, euint64 addedValue) internal virtual returns (ebool) {
         require(TFHE.isSenderAllowed(addedValue));
         address owner = _msgSender();
@@ -364,7 +364,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
     function increaseAllowance(address spender, euint64 addedValue) public virtual returns (ebool) {
         return _increaseAllowance(spender, addedValue);
     }
-    
+
     function increaseAllowance(address spender, einput encryptedAmount, bytes calldata inputProof) public virtual returns (ebool) {
         return increaseAllowance(spender, TFHE.asEuint64(encryptedAmount, inputProof));
     }

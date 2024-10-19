@@ -118,10 +118,6 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
     console.log(decrypt);
     const newbalance = await this.normalERC.balanceOf(this.signers.alice.address);
     expect(newbalance).to.equal(920);
-
-
-
-
 });
 
 });
