@@ -16,13 +16,3 @@ npx hardhat task:computePredeployAddress --private-key "$PRIVATE_KEY_GATEWAY_DEP
 
 npx hardhat compile:specific --contract contracts
 
-npx hardhat task:computeACLAddress
-npx hardhat task:computeTFHEExecutorAddress
-npx hardhat task:computeKMSVerifierAddress
-npx hardhat task:deployACL
-npx hardhat task:deployTFHEExecutor
-npx hardhat task:deployKMSVerifier
-
-rm -rf fhevmTemp
-
-npx hardhat task:launchFhevm --skip-get-coin true
