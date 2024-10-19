@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "fhevm/lib/TFHE.sol";
-import {ConfidentialToken} from "./ConfidentialERC20/ConfidentialToken.sol";
+import {ConfidentialToken} from "../ConfidentialERC20/ConfidentialToken.sol";
 import "./Identity.sol";
 import "./TransferRules.sol";
 

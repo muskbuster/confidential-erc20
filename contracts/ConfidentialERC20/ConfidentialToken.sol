@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "./CERC20.sol";
+import "./ConfidentialERC20.sol";
 import "fhevm/lib/TFHE.sol";
 
 /**
  * @dev Example Implementation of the {ConfidentialERC20} contract, providing minting and additional functionality.
  */
-contract ConfidentialToken is CERC20 {
+contract ConfidentialToken is ConfidentialERC20 {
     address private _owner;
 
     /**
      * @dev Sets the initial values for {name} and {symbol}, and assigns ownership to the deployer.
      */
-    constructor(string memory name_, string memory symbol_) CERC20(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_) ConfidentialERC20(name_, symbol_) {
         _owner = msg.sender;
     }
 

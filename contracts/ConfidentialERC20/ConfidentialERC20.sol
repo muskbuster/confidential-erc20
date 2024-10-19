@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.20;
 
-import {IConfidentialERC20} from "./Utils/IERC20.sol";
+import {IConfidentialERC20} from "./Utils/IConfidentialERC20.sol";
 import {IERC20Metadata} from "./Utils/IERC20Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20Errors} from "./Utils/IERC6093.sol";
@@ -27,7 +27,7 @@ import "fhevm/gateway/GatewayCaller.sol";
  * conventional and does not conflict with the expectations of ERC-20
  * applications.
  */
-abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20Errors,GatewayCaller {
+abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20Errors,GatewayCaller {
     mapping(address account => euint64) public _balances;
 
     mapping(address account => mapping(address spender => euint64)) internal _allowances;
