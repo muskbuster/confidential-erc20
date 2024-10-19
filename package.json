@@ -1,13 +1,13 @@
 {
-  "name": "@zama-ai/fhevm-hardhat-template",
-  "description": "fhEVM hardhat template",
+  "name": "confidential-erc20-framework",
+  "description": "Confidential ERC20 Framework using FHE",
   "version": "1.0.0",
   "engines": {
     "node": ">=20.0.0"
   },
   "author": {
-    "name": "zama-ai",
-    "url": "https://github.com/zama-ai"
+    "name": "inco",
+    "url": "https://inco.org"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
@@ -87,6 +87,7 @@
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain",
     "test": "hardhat test",
     "test:mock": "hardhat test --network hardhat",
+    "test:rivest": "hardhat test --network Inco",
     "coverage:mock": "hardhat coverage",
     "task:getEthereumAddress": "hardhat task:getEthereumAddress",
     "task:deployERC20": "hardhat task:deployERC20",

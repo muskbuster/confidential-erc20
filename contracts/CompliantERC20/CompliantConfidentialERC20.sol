@@ -2,10 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "fhevm/lib/TFHE.sol";
-import {ConfidentialToken} from "../ConfidentialERC20/ConfidentialToken.sol";
+import { ConfidentialToken } from "../ConfidentialERC20/ConfidentialToken.sol";
 import "./Identity.sol";
 import "./TransferRules.sol";
-
 
 contract CompliantConfidentialERC20 is ConfidentialToken {
     Identity public identityContract;
@@ -15,9 +14,7 @@ contract CompliantConfidentialERC20 is ConfidentialToken {
         string memory symbol_,
         address _identityContract,
         address _transferRulesContract
-    )
-    ConfidentialToken(name_, symbol_)
-    {
+    ) ConfidentialToken(name_, symbol_) {
         identityContract = Identity(_identityContract);
         transferRulesContract = TransferRules(_transferRulesContract);
     }
@@ -27,25 +24,13 @@ contract CompliantConfidentialERC20 is ConfidentialToken {
         address to,
         einput encryptedAmount,
         bytes calldata inputProof
-    )
-        public
-        virtual
-        override
-        returns (bool)
-    {
+    ) public virtual override returns (bool) {
         euint64 amount = TFHE.asEuint64(encryptedAmount, inputProof);
         return transfer(to, amount);
     }
 
     // Internal transfer function applying the transfer rules
-    function transfer(
-        address to,
-        euint64 amount
-    )
-        public
-        override
-        returns (bool)
-    {
+    function transfer(address to, euint64 amount) public override returns (bool) {
         require(TFHE.isSenderAllowed(amount), "Sender not allowed");
 
         ebool hasEnough = TFHE.le(amount, _balances[msg.sender]);
@@ -63,13 +48,7 @@ contract CompliantConfidentialERC20 is ConfidentialToken {
     }
 
     // Internal transfer function with encrypted balances
-    function _transfer(
-        address from,
-        address to,
-        euint64 _amount
-    )
-        internal
-    {
+    function _transfer(address from, address to, euint64 _amount) internal {
         euint64 newBalanceFrom = TFHE.sub(_balances[from], _amount);
         _balances[from] = newBalanceFrom;
         TFHE.allow(newBalanceFrom, from);
@@ -81,7 +60,7 @@ contract CompliantConfidentialERC20 is ConfidentialToken {
     }
 
     // Allows admin to view any user's encrypted balance
-    function adminViewUserBalance(address user) onlyOwner() public  {
+    function adminViewUserBalance(address user) public onlyOwner {
         TFHE.allow(_balances[user], owner());
     }
 }

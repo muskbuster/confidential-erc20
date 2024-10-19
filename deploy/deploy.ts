@@ -8,7 +8,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const name = "ConfidentialToken";
   const symbol = "CFT";
 
-
   const deployed = await deploy("ConfidentialToken", {
     from: deployer,
     args: [name, symbol],
@@ -19,5 +18,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
-func.id = "deploy_confidentialERC20"; 
+func.id = "deploy_confidentialERC20";
 func.tags = ["ConfidentialToken"];

@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "fhevm/lib/TFHE.sol";
 import "fhevm/gateway/GatewayCaller.sol";
-import {ConfidentialToken} from "./ConfidentialERC20/ConfidentialToken.sol";
+import { ConfidentialToken } from "./ConfidentialERC20/ConfidentialToken.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -24,7 +24,7 @@ contract ConfidentialERC20Wrapper is ConfidentialToken {
         uint256 _amount = uint256(amount);
         uint256 allowance = baseERC20.allowance(msg.sender, address(this));
         require(allowance >= _amount, "Not enough allowance");
-        baseERC20.transferFrom(msg.sender, address(this),_amount);
+        baseERC20.transferFrom(msg.sender, address(this), _amount);
         _mint(msg.sender, uint64(amount));
         emit Wrap(msg.sender, amount);
     }
@@ -37,26 +37,24 @@ contract ConfidentialERC20Wrapper is ConfidentialToken {
         _requestBurn(msg.sender, uint64(amount));
     }
 
+    function _burnCallback(uint256 requestID, bool decryptedInput) public virtual override onlyGateway {
+        BurnRq memory burnRequest = burnRqs[requestID];
+        address account = burnRequest.account;
+        uint64 amount = burnRequest.amount;
 
-function _burnCallback(uint256 requestID, bool decryptedInput) public virtual override onlyGateway {
-    BurnRq memory burnRequest = burnRqs[requestID];
-    address account = burnRequest.account;
-    uint64 amount = burnRequest.amount;
+        if (!decryptedInput) {
+            revert("Decryption failed");
+        }
 
-    if (!decryptedInput) {
-        revert("Decryption failed");
+        // Call base ERC20 transfer and emit Unwrap event
+        baseERC20.transfer(account, amount);
+        emit Unwrap(account, amount);
+
+        // Continue with the burn logic
+        _totalSupply -= amount;
+        _balances[account] = TFHE.sub(_balances[account], amount);
+        TFHE.allow(_balances[account], address(this));
+        TFHE.allow(_balances[account], account);
+        delete burnRqs[requestID];
     }
-
-    // Call base ERC20 transfer and emit Unwrap event
-    baseERC20.transfer(account, amount);
-    emit Unwrap(account, amount);
-
-    // Continue with the burn logic
-    _totalSupply -= amount;
-    _balances[account] = TFHE.sub(_balances[account], amount);
-    TFHE.allow(_balances[account], address(this));
-    TFHE.allow(_balances[account], account);
-    delete burnRqs[requestID];
-}
-
 }

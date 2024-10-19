@@ -165,11 +165,10 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
         details: {
-          yul: false
-        }
+          yul: false,
+        },
       },
       evmVersion: "cancun",
-      
     },
   },
   warnings: {

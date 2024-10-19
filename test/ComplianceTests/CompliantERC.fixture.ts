@@ -23,12 +23,9 @@ export async function deployCompliantERC20Fixture(): Promise<{
   await transferRules.waitForDeployment();
 
   // Deploy the CompliantConfidentialERC20 contract
-  const contract = await contractFactory.connect(signers.alice).deploy(
-    "CERC20",
-    "C20",
-    identity.target,
-    transferRules.target
-  );
+  const contract = await contractFactory
+    .connect(signers.alice)
+    .deploy("CERC20", "C20", identity.target, transferRules.target);
   await contract.waitForDeployment();
 
   console.log(contract.target, identity.target, transferRules.target);
@@ -37,6 +34,6 @@ export async function deployCompliantERC20Fixture(): Promise<{
   return {
     contract,
     identity,
-    transferRules
+    transferRules,
   };
 }

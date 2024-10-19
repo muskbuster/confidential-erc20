@@ -3,10 +3,10 @@
 
 pragma solidity ^0.8.20;
 
-import {IConfidentialERC20} from "./Utils/IConfidentialERC20.sol";
-import {IERC20Metadata} from "./Utils/IERC20Metadata.sol";
+import { IConfidentialERC20 } from "./Interfaces/IConfidentialERC20.sol";
+import { IERC20Metadata } from "./Utils/IERC20Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20Errors} from "./Utils/IERC6093.sol";
+import { IERC20Errors } from "./Utils/IERC6093.sol";
 import "fhevm/lib/TFHE.sol";
 import "fhevm/gateway/GatewayCaller.sol";
 /**
@@ -27,7 +27,7 @@ import "fhevm/gateway/GatewayCaller.sol";
  * conventional and does not conflict with the expectations of ERC-20
  * applications.
  */
-abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20Errors,GatewayCaller {
+abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20Errors, GatewayCaller {
     mapping(address account => euint64) public _balances;
 
     mapping(address account => mapping(address spender => euint64)) internal _allowances;
@@ -43,7 +43,7 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor(string memory name_, string memory symbol_) Ownable(msg.sender){
+    constructor(string memory name_, string memory symbol_) Ownable(msg.sender) {
         _name = name_;
         _symbol = symbol_;
     }
@@ -109,8 +109,8 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
     function transfer(address to, euint64 value) public virtual returns (bool) {
         require(TFHE.isSenderAllowed(value));
         address owner = _msgSender();
-        ebool isTransferable  = TFHE.le(value, _balances[msg.sender]);
-        _transfer(owner, to, value,isTransferable);
+        ebool isTransferable = TFHE.le(value, _balances[msg.sender]);
+        _transfer(owner, to, value, isTransferable);
         return true;
     }
 
@@ -118,7 +118,6 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
         transfer(to, TFHE.asEuint64(encryptedAmount, inputProof));
         return true;
     }
-
 
     /**
      * @dev See {IERC20-allowance}.
@@ -148,7 +147,6 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
         return true;
     }
 
-
     /**
      * @dev See {IERC20-transferFrom}.
      *
@@ -166,7 +164,7 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
         require(TFHE.isSenderAllowed(value));
         address spender = _msgSender();
         ebool isTransferable = _decreaseAllowance(from, spender, value);
-        _transfer(from, to, value,isTransferable);
+        _transfer(from, to, value, isTransferable);
         return true;
     }
 
@@ -190,7 +188,7 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
      *
      * NOTE: This function is not virtual, {_update} should be overridden instead.
      */
-    function _transfer(address from, address to, euint64 value,ebool isTransferable) internal {
+    function _transfer(address from, address to, euint64 value, ebool isTransferable) internal {
         if (from == address(0)) {
             revert ERC20InvalidSender(address(0));
         }
@@ -230,8 +228,8 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
         }
         _balances[account] = TFHE.add(_balances[account], value);
         TFHE.allow(_balances[account], address(this));
-        TFHE.allow(_balances[account],msg.sender);
-        _totalSupply+=value;
+        TFHE.allow(_balances[account], msg.sender);
+        _totalSupply += value;
     }
 
     /**
@@ -242,8 +240,8 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
      *
      * NOTE: This function is not virtual, {_update} should be overridden instead
      */
-    function _requestBurn(address account, uint64 amount) internal virtual{
-                if (account == address(0)) {
+    function _requestBurn(address account, uint64 amount) internal virtual {
+        if (account == address(0)) {
             revert ERC20InvalidReceiver(address(0));
         }
         ebool enoughBalance = TFHE.le(amount, _balances[account]);
@@ -266,10 +264,10 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
         BurnRq memory burnRequest = burnRqs[requestID];
         address account = burnRequest.account;
         uint64 amount = burnRequest.amount;
-                if (!decryptedInput) {
+        if (!decryptedInput) {
             revert("Decryption failed");
         }
-        _totalSupply=_totalSupply-amount;
+        _totalSupply = _totalSupply - amount;
         _balances[account] = TFHE.sub(_balances[account], amount);
         TFHE.allow(_balances[account], address(this));
         TFHE.allow(_balances[account], account);
@@ -365,7 +363,11 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
         return _increaseAllowance(spender, addedValue);
     }
 
-    function increaseAllowance(address spender, einput encryptedAmount, bytes calldata inputProof) public virtual returns (ebool) {
+    function increaseAllowance(
+        address spender,
+        einput encryptedAmount,
+        bytes calldata inputProof
+    ) public virtual returns (ebool) {
         return increaseAllowance(spender, TFHE.asEuint64(encryptedAmount, inputProof));
     }
 
@@ -374,9 +376,11 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
         return _decreaseAllowance(_msgSender(), spender, subtractedValue);
     }
 
-    function decreaseAllowance(address spender, einput encryptedAmount, bytes calldata inputProof) public virtual returns (ebool) {
+    function decreaseAllowance(
+        address spender,
+        einput encryptedAmount,
+        bytes calldata inputProof
+    ) public virtual returns (ebool) {
         return decreaseAllowance(spender, TFHE.asEuint64(encryptedAmount, inputProof));
     }
-
-
 }

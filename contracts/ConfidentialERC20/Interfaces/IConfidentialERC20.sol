@@ -30,7 +30,7 @@ interface IConfidentialERC20 {
     /**
      * @dev Returns the value of tokens owned by `account`.
      */
-    function balanceOf(address account) external  returns (euint64);
+    function balanceOf(address account) external returns (euint64);
 
     /**
      * @dev Moves a `value` amount of tokens from the caller's account to `to`.
@@ -48,7 +48,7 @@ interface IConfidentialERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender) external  returns (euint64);
+    function allowance(address owner, address spender) external returns (euint64);
 
     /**
      * @dev Sets a `value` amount of tokens as the allowance of `spender` over the

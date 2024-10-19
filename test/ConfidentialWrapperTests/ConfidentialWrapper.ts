@@ -1,9 +1,10 @@
-
 import { expect } from "chai";
+
+import { awaitAllDecryptionResults } from "../asyncDecrypt";
 import { createInstances } from "../instance";
 import { getSigners, initSigners } from "../signers";
 import { deployEncryptedERC20Fixture } from "./ConfidentialWrapper.fixture";
-import { awaitAllDecryptionResults } from "../asyncDecrypt";
+
 describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
   before(async function () {
     await initSigners();
@@ -12,9 +13,9 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
 
   beforeEach(async function () {
     const { contract, erc20 } = await deployEncryptedERC20Fixture();
-    this.wrapperContract = contract;  // The ConfidentialERC20Wrapper contract
-    this.normalERC = erc20;           // The base ERC20 contract (normal ERC20)
-    this.wrapperAddress = await this.wrapperContract.getAddress();  // Wrapper contract address
+    this.wrapperContract = contract; // The ConfidentialERC20Wrapper contract
+    this.normalERC = erc20; // The base ERC20 contract (normal ERC20)
+    this.wrapperAddress = await this.wrapperContract.getAddress(); // Wrapper contract address
     this.instances = await createInstances(this.signers); // Create encryption instances for signers
   });
 
@@ -22,24 +23,19 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
     const wrapAmount = 100;
 
     // Set allowance for wrapping
-    const allowanceTx = await this.normalERC
-      .connect(this.signers.alice)
-      .approve(this.wrapperAddress, wrapAmount);  // Correct reference to wrapper address
+    const allowanceTx = await this.normalERC.connect(this.signers.alice).approve(this.wrapperAddress, wrapAmount); // Correct reference to wrapper address
     await allowanceTx.wait();
 
     // Verify the allowance is set correctly
-    const allowance = await this.normalERC.allowance(this.signers.alice.address, this.wrapperAddress);  // Correct reference
+    const allowance = await this.normalERC.allowance(this.signers.alice.address, this.wrapperAddress); // Correct reference
     expect(allowance).to.equal(wrapAmount);
 
     // Call wrap function on the wrapper contract
     const wrapTx = await this.wrapperContract.connect(this.signers.alice).wrap(wrapAmount);
     await wrapTx.wait();
 
-
     const balance = await this.normalERC.balanceOf(this.signers.alice.address);
     expect(balance).to.equal(900);
-
-
 
     // Proceed with encrypted transfer logic
     const input = this.instances.alice.createEncryptedInput(this.wrapperAddress, this.signers.alice.address);
@@ -47,7 +43,7 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
     const encryptedTransferAmount = input.encrypt();
 
     const transferTx = await this.wrapperContract["transfer(address,bytes32,bytes)"](
-      this.signers.bob.address,  // Correct Bob's address
+      this.signers.bob.address, // Correct Bob's address
       encryptedTransferAmount.handles[0],
       encryptedTransferAmount.inputProof,
     );
@@ -76,28 +72,22 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
   });
 
   it("should successfully unwrap tokens", async function () {
-
     const wrapAmount = 100;
 
     // Set allowance for wrapping
-    const allowanceTx = await this.normalERC
-      .connect(this.signers.alice)
-      .approve(this.wrapperAddress, wrapAmount);  // Correct reference to wrapper address
+    const allowanceTx = await this.normalERC.connect(this.signers.alice).approve(this.wrapperAddress, wrapAmount); // Correct reference to wrapper address
     await allowanceTx.wait();
 
     // Verify the allowance is set correctly
-    const allowance = await this.normalERC.allowance(this.signers.alice.address, this.wrapperAddress);  // Correct reference
+    const allowance = await this.normalERC.allowance(this.signers.alice.address, this.wrapperAddress); // Correct reference
     expect(allowance).to.equal(wrapAmount);
 
     // Call wrap function on the wrapper contract
     const wrapTx = await this.wrapperContract.connect(this.signers.alice).wrap(wrapAmount);
     await wrapTx.wait();
 
-
     const balance = await this.normalERC.balanceOf(this.signers.alice.address);
     expect(balance).to.equal(900);
-
-
 
     // Proceed with encrypted transfer logic
     const input = this.instances.alice.createEncryptedInput(this.wrapperAddress, this.signers.alice.address);
@@ -105,7 +95,7 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
     const encryptedTransferAmount = input.encrypt();
 
     const transferTx = await this.wrapperContract["transfer(address,bytes32,bytes)"](
-      this.signers.bob.address,  // Correct Bob's address
+      this.signers.bob.address, // Correct Bob's address
       encryptedTransferAmount.handles[0],
       encryptedTransferAmount.inputProof,
     );
@@ -113,11 +103,10 @@ describe("ConfidentialERC20Wrapper - Wrap Functionality", function () {
     // ---------------- Unwrap---------------------
     const unwrapTrx = await this.wrapperContract.connect(this.signers.alice).unwrap(20);
     await unwrapTrx.wait();
-   const decrypt= await awaitAllDecryptionResults();
-   await decrypt;
+    const decrypt = await awaitAllDecryptionResults();
+    await decrypt;
     console.log(decrypt);
     const newbalance = await this.normalERC.balanceOf(this.signers.alice.address);
     expect(newbalance).to.equal(920);
-});
-
+  });
 });

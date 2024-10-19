@@ -11,19 +11,18 @@ contract Identity is Ownable {
 
     constructor() Ownable(msg.sender) {}
 
-    function registerIdentity(address user,einput encryptedAge, bytes calldata inputProof) external onlyOwner()
-     {
+    function registerIdentity(address user, einput encryptedAge, bytes calldata inputProof) external onlyOwner {
         require(!isRegistered[user], "Identity already registered");
         euint8 age = TFHE.asEuint8(encryptedAge, inputProof);
         Age[user] = age;
         isRegistered[user] = true;
         TFHE.allow(Age[user], msg.sender);
         TFHE.allow(Age[user], user);
-        TFHE.allow(Age[user],address(this));
+        TFHE.allow(Age[user], address(this));
         emit IdentityRegistered(user);
     }
 
-    function updateAge(address user, einput encryptedAge, bytes calldata inputProof) external onlyOwner() {
+    function updateAge(address user, einput encryptedAge, bytes calldata inputProof) external onlyOwner {
         require(isRegistered[user], "Identity not registered");
 
         euint8 age = TFHE.asEuint8(encryptedAge, inputProof);
@@ -31,12 +30,12 @@ contract Identity is Ownable {
 
         // Allow access to the updated encrypted age
         TFHE.allow(Age[user], msg.sender);
-        TFHE.allow(Age[user],address(this));
+        TFHE.allow(Age[user], address(this));
 
         emit AgeUpdated(msg.sender);
     }
 
-    function checkAgeRequirement(address from,address to, uint8 minAge) public  returns (ebool) {
+    function checkAgeRequirement(address from, address to, uint8 minAge) public returns (ebool) {
         require(isRegistered[from], "From address is not registered");
         require(isRegistered[to], "To address is not registered");
 
@@ -47,7 +46,7 @@ contract Identity is Ownable {
 
         // Allow querying contract to access the result
         TFHE.allow(result, msg.sender);
-        TFHE.allow(result,address(this));
+        TFHE.allow(result, address(this));
         return result;
     }
 
@@ -55,12 +54,12 @@ contract Identity is Ownable {
         return isRegistered[user];
     }
 
-    function getIdentity(address user) external  returns (euint8) {
+    function getIdentity(address user) external returns (euint8) {
         require(isRegistered[user], "User is not registered");
 
         euint8 age = Age[user];
         TFHE.allow(age, msg.sender);
-        TFHE.allow(age,address(this));
+        TFHE.allow(age, address(this));
         return age;
     }
 }

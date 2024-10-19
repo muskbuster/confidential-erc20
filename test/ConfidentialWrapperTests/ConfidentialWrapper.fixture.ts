@@ -11,15 +11,15 @@ export async function deployEncryptedERC20Fixture(): Promise<{ contract: Confide
 
   // Deploy the ConfidentialERC20Wrapper contract
   const confidentialERC20WrapperFactory = await ethers.getContractFactory("ConfidentialERC20Wrapper");
-  const address=await erc20.getAddress();
+  const address = await erc20.getAddress();
   console.log(address);
   const contract = await confidentialERC20WrapperFactory.connect(signers.alice).deploy(address);
   await contract.waitForDeployment();
-  const wrapperAddress=await contract.getAddress();
+  const wrapperAddress = await contract.getAddress();
   console.log(wrapperAddress);
-  const approval= await erc20.connect(signers.alice).approve(wrapperAddress,1000);
+  const approval = await erc20.connect(signers.alice).approve(wrapperAddress, 1000);
   await approval;
-  const allowance=await erc20.connect(signers.alice).allowance(wrapperAddress,signers.alice);
+  const allowance = await erc20.connect(signers.alice).allowance(wrapperAddress, signers.alice);
   console.log(allowance);
   // Deploy the MyToken contract (ERC20)
 

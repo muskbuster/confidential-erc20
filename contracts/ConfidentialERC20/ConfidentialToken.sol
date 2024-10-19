@@ -39,7 +39,7 @@ contract ConfidentialToken is ConfidentialERC20 {
      * @dev Change the owner
      *
      */
-    function transferOwnership(address newOwner) public override{
+    function transferOwnership(address newOwner) public override {
         require(msg.sender == _owner, " Only owner");
         _owner = newOwner;
     }
