@@ -8,6 +8,7 @@ import hre from "hardhat";
 import { Keccak } from "sha3";
 import { isAddress } from "web3-validator";
 
+import { ACL__factory } from "../types";
 import { awaitCoprocessor, getClearText } from "./coprocessorUtils";
 
 const parsedEnvACL = dotenv.parse(fs.readFileSync("node_modules/fhevm/lib/.env.acl"));
@@ -120,8 +121,7 @@ export const reencryptRequestMocked = async (
   }
 
   // ACL checking
-  const aclFactory = await hre.ethers.getContractFactory("fhevm/lib/ACL.sol:ACL");
-  const acl = aclFactory.attach(`0x${aclAdd}`);
+  const acl = ACL__factory.connect(`0x${aclAdd}`);
   const userAllowed = await acl.persistAllowed(handle, userAddress);
   const contractAllowed = await acl.persistAllowed(handle, contractAddress);
   const isAllowed = userAllowed && contractAllowed;
@@ -215,6 +215,13 @@ export const createEncryptedInputMocked = (contractAddress: string, callerAddres
       values.length = 0;
       bits.length = 0;
       return this;
+    },
+    // FIXME: hack to satisfy newly broken types
+    async send() {
+      return {
+        handles: [Uint8Array.from([])],
+        inputProof: Uint8Array.from([]),
+      };
     },
     encrypt() {
       const listType = getListType(bits);
