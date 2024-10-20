@@ -42,7 +42,7 @@ if (!mnemonic) {
 }
 
 const chainIds = {
-  zama: 8009,
+  Inco: 9000,
   local: 9000,
   localNetwork1: 9000,
   multipleValidatorTestnet: 8009,
@@ -60,8 +60,8 @@ function getChainConfig(chain: keyof typeof chainIds): NetworkUserConfig {
     case "multipleValidatorTestnet":
       jsonRpcUrl = "https://rpc.fhe-ethermint.zama.ai";
       break;
-    case "zama":
-      jsonRpcUrl = "https://devnet.zama.ai";
+    case "Inco":
+      jsonRpcUrl = "https://validator.rivest.inco.org";
       break;
   }
   return {
@@ -138,7 +138,7 @@ const config: HardhatUserConfig = {
         path: "m/44'/60'/0'/0",
       },
     },
-    zama: getChainConfig("zama"),
+    Inco: getChainConfig("Inco"),
     localDev: getChainConfig("local"),
     local: getChainConfig("local"),
     localNetwork1: getChainConfig("localNetwork1"),
@@ -158,11 +158,15 @@ const config: HardhatUserConfig = {
         // https://github.com/paulrberg/hardhat-template/issues/31
         bytecodeHash: "none",
       },
+      viaIR: true,
       // Disable the optimizer when debugging
       // https://hardhat.org/hardhat-network/#solidity-optimizer-support
       optimizer: {
         enabled: true,
-        runs: 800,
+        runs: 200,
+        details: {
+          yul: false,
+        },
       },
       evmVersion: "cancun",
     },

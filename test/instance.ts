@@ -45,7 +45,7 @@ export const createInstances = async (accounts: Signers): Promise<FhevmInstances
 export const createInstance = async () => {
   const instance = await createFhevmInstance({
     networkUrl: network.config.url,
-    gatewayUrl: "http://localhost:7077",
+    gatewayUrl: "https://gateway.rivest.inco.org",
   });
   return instance;
 };

@@ -3,10 +3,10 @@
 
 pragma solidity ^0.8.20;
 
-import {IConfidentialERC20} from "./Utils/IERC20.sol";
-import {IERC20Metadata} from "./Utils/IERC20Metadata.sol";
+import { IConfidentialERC20 } from "./Interfaces/IConfidentialERC20.sol";
+import { IERC20Metadata } from "./Utils/IERC20Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20Errors} from "./Utils/IERC6093.sol";
+import { IERC20Errors } from "./Utils/IERC6093.sol";
 import "fhevm/lib/TFHE.sol";
 import "fhevm/gateway/GatewayCaller.sol";
 /**
@@ -19,7 +19,7 @@ import "fhevm/gateway/GatewayCaller.sol";
  * https://forum.openzeppelin.com/t/how-to-implement-erc20-supply-mechanisms/226[How
  * to implement supply mechanisms].
  *
- * The default value of {decimals} is 18. To change this, you should override
+ * The default value of {decimals} is 6. To change this, you should override
  * this function so it returns a different value.
  *
  * We have followed general OpenZeppelin Contracts guidelines: functions revert
@@ -27,7 +27,7 @@ import "fhevm/gateway/GatewayCaller.sol";
  * conventional and does not conflict with the expectations of ERC-20
  * applications.
  */
-abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20Errors,GatewayCaller {
+abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20Errors, GatewayCaller {
     mapping(address account => euint64) public _balances;
 
     mapping(address account => mapping(address spender => euint64)) internal _allowances;
@@ -43,7 +43,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor(string memory name_, string memory symbol_) Ownable(msg.sender){
+    constructor(string memory name_, string memory symbol_) Ownable(msg.sender) {
         _name = name_;
         _symbol = symbol_;
     }
@@ -81,7 +81,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
     function decimals() public view virtual returns (uint8) {
-        return 18;
+        return 6;
     }
 
     /**
@@ -109,8 +109,8 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
     function transfer(address to, euint64 value) public virtual returns (bool) {
         require(TFHE.isSenderAllowed(value));
         address owner = _msgSender();
-        ebool isTransferable  = TFHE.le(value, _balances[msg.sender]);
-        _transfer(owner, to, value,isTransferable);
+        ebool isTransferable = TFHE.le(value, _balances[msg.sender]);
+        _transfer(owner, to, value, isTransferable);
         return true;
     }
 
@@ -118,7 +118,6 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
         transfer(to, TFHE.asEuint64(encryptedAmount, inputProof));
         return true;
     }
-
 
     /**
      * @dev See {IERC20-allowance}.
@@ -148,15 +147,11 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
         return true;
     }
 
-
     /**
      * @dev See {IERC20-transferFrom}.
      *
-     * Skips emitting an {Approval} event indicating an allowance update. This is not
-     * required by the ERC. See {xref-ERC20-_approve-address-address-uint256-bool-}[_approve].
-     *
      * NOTE: Does not update the allowance if the current allowance
-     * is the maximum `uint256`.
+     * is the maximum `uint64`.
      *
      * Requirements:
      *
@@ -169,7 +164,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
         require(TFHE.isSenderAllowed(value));
         address spender = _msgSender();
         ebool isTransferable = _decreaseAllowance(from, spender, value);
-        _transfer(from, to, value,isTransferable);
+        _transfer(from, to, value, isTransferable);
         return true;
     }
 
@@ -193,7 +188,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
      *
      * NOTE: This function is not virtual, {_update} should be overridden instead.
      */
-    function _transfer(address from, address to, euint64 value,ebool isTransferable) internal {
+    function _transfer(address from, address to, euint64 value, ebool isTransferable) internal {
         if (from == address(0)) {
             revert ERC20InvalidSender(address(0));
         }
@@ -233,8 +228,8 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
         }
         _balances[account] = TFHE.add(_balances[account], value);
         TFHE.allow(_balances[account], address(this));
-        TFHE.allow(_balances[account],msg.sender);
-        _totalSupply+=value;
+        TFHE.allow(_balances[account], msg.sender);
+        _totalSupply += value;
     }
 
     /**
@@ -245,8 +240,8 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
      *
      * NOTE: This function is not virtual, {_update} should be overridden instead
      */
-    function _requestBurn(address account, uint64 amount) internal virtual{
-                if (account == address(0)) {
+    function _requestBurn(address account, uint64 amount) internal virtual {
+        if (account == address(0)) {
             revert ERC20InvalidReceiver(address(0));
         }
         ebool enoughBalance = TFHE.le(amount, _balances[account]);
@@ -269,10 +264,10 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
         BurnRq memory burnRequest = burnRqs[requestID];
         address account = burnRequest.account;
         uint64 amount = burnRequest.amount;
-                if (!decryptedInput) {
+        if (!decryptedInput) {
             revert("Decryption failed");
         }
-        _totalSupply=_totalSupply-amount;
+        _totalSupply = _totalSupply - amount;
         _balances[account] = TFHE.sub(_balances[account], amount);
         TFHE.allow(_balances[account], address(this));
         TFHE.allow(_balances[account], account);
@@ -308,7 +303,7 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
      * true using the following override:
      *
      * ```solidity
-     * function _approve(address owner, address spender, uint256 value, bool) internal virtual override {
+     * function _approve(address owner, address spender, euint64 value, bool) internal virtual override {
      *     super._approve(owner, spender, value, true);
      * }
      * ```
@@ -332,10 +327,8 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
     }
 
     /**
-     * @dev Updates `owner` s allowance for `spender` based on spent `value`.
+     * @dev Reduces `owner` s allowance for `spender` based on spent `value`.
      *
-     * Does not update the allowance value in case of infinite allowance.
-     * Revert if not enough allowance is available.
      *
      * Does not emit an {Approval} event.
      */
@@ -349,7 +342,12 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
         _approve(owner, spender, TFHE.select(isTransferable, TFHE.sub(currentAllowance, amount), currentAllowance));
         return isTransferable;
     }
-
+    /**
+     * @dev Increases `owner` s allowance for `spender` based on spent `value`.
+     *
+     *
+     * Does not emit an {Approval} event.
+     */
     function _increaseAllowance(address spender, euint64 addedValue) internal virtual returns (ebool) {
         require(TFHE.isSenderAllowed(addedValue));
         address owner = _msgSender();
@@ -364,8 +362,12 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
     function increaseAllowance(address spender, euint64 addedValue) public virtual returns (ebool) {
         return _increaseAllowance(spender, addedValue);
     }
-    
-    function increaseAllowance(address spender, einput encryptedAmount, bytes calldata inputProof) public virtual returns (ebool) {
+
+    function increaseAllowance(
+        address spender,
+        einput encryptedAmount,
+        bytes calldata inputProof
+    ) public virtual returns (ebool) {
         return increaseAllowance(spender, TFHE.asEuint64(encryptedAmount, inputProof));
     }
 
@@ -374,9 +376,11 @@ abstract contract CERC20 is Ownable, IConfidentialERC20, IERC20Metadata, IERC20E
         return _decreaseAllowance(_msgSender(), spender, subtractedValue);
     }
 
-    function decreaseAllowance(address spender, einput encryptedAmount, bytes calldata inputProof) public virtual returns (ebool) {
+    function decreaseAllowance(
+        address spender,
+        einput encryptedAmount,
+        bytes calldata inputProof
+    ) public virtual returns (ebool) {
         return decreaseAllowance(spender, TFHE.asEuint64(encryptedAmount, inputProof));
     }
-
-
 }

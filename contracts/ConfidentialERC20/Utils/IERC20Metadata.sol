@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.20;
 
-import {IConfidentialERC20} from "./IERC20.sol";
+import { IConfidentialERC20 } from "../Interfaces/IConfidentialERC20.sol";
 
 /**
  * @dev Interface for the optional metadata functions from the ERC-20 standard.
