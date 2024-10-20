@@ -72,6 +72,7 @@ function getChainConfig(chain: keyof typeof chainIds): NetworkUserConfig {
       break;
     case "Inco":
       jsonRpcUrl = "https://validator.rivest.inco.org";
+      gatewayUrl = "https://gateway.rivest.inco.org";
       break;
   }
   return {
