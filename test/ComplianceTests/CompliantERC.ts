@@ -39,7 +39,7 @@ describe("CompliantConfidentialERC20 Contract Tests", function () {
     );
     await updateAliceCodeTx.wait();
     const inputBob = this.instances.bob.createEncryptedInput(this.identityAddress, this.signers.bob.address);
-    inputBob.add8(883238400); //age 27
+    inputBob.add64(883238400); //age 27
     const encryptedCodeBob = inputBob.encrypt();
     const updateBobCodeTx = await this.identity.registerIdentity(
       this.signers.bob.address,
