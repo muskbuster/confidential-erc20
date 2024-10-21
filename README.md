@@ -9,8 +9,6 @@ Note: This repository is not audited and is intended solely as a proof of concep
 
 ### Pre Requisites
 
-Install [docker](https://docs.docker.com/engine/install/)
-
 Install [pnpm](https://pnpm.io/installation)
 
 Before being able to run any command, you need to create a `.env` file and set a BIP-39 compatible mnemonic as an
