@@ -1,5 +1,5 @@
 # Confidential ERC20 Framework
-The confidential ERC20 Framework (cERC20) transforms ERC20 tokens into a confidential form that conceals balances and transaction amounts, with optional viewing and transfer rules to meet regulatory obligations or enhance programmatic risk management. While sender-receiver linkage remains, Confidential ERC20 balances privacy with risk management using an encryption-based approach, specifically fully homomorphic encryption (FHE), allowing operations on encrypted data without decryption.
+The confidential ERC20 Framework transforms ERC20 tokens into a confidential form that conceals balances and transaction amounts, with optional viewing and transfer rules to meet regulatory obligations or enhance programmatic risk management. While sender-receiver linkage remains, Confidential ERC20 balances privacy with risk management using an encryption-based approach, specifically fully homomorphic encryption (FHE), allowing operations on encrypted data without decryption.
 
 This implementation is based on the collaborative research between [Inco](https://www.inco.org/) and [Circle Research](https://www.circle.com/en/circle-research). For more information, see the [whitepaper] TODO: link paper.
 
