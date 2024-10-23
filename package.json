@@ -2,6 +2,7 @@
   "name": "confidential-erc20-framework",
   "description": "Confidential ERC20 Framework using FHE",
   "version": "1.0.0",
+  "license": "MIT",
   "engines": {
     "node": ">=20.0.0"
   },
