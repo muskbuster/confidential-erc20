@@ -2,7 +2,7 @@ import { expect } from "chai";
 
 import { createInstances } from "../instance";
 import { getSigners, initSigners } from "../signers";
-import { deployCompliantERC20Fixture } from "./CompliantERC.fixture";
+import { deployCompliantERC20Fixture } from "./CompliantConfidentialERC.fixture";
 
 describe("CompliantConfidentialERC20 Contract Tests", function () {
   before(async function () {
@@ -27,7 +27,8 @@ describe("CompliantConfidentialERC20 Contract Tests", function () {
     const transaction = await this.erc20.mint(this.signers.alice.address, 1000);
     await transaction.wait();
     const input = this.instances.alice.createEncryptedInput(this.identityAddress, this.signers.alice.address);
-    input.add8(29);
+    //Alice is born on 21st December 2000 hence the unix timestamp is 977414400
+    input.add64(977414400); //age 24
     const encryptedCode = input.encrypt();
 
     // Update Alice's identity
@@ -38,7 +39,8 @@ describe("CompliantConfidentialERC20 Contract Tests", function () {
     );
     await updateAliceCodeTx.wait();
     const inputBob = this.instances.bob.createEncryptedInput(this.identityAddress, this.signers.bob.address);
-    inputBob.add8(25);
+    //Bob is born on 27th December 1997 hence the unix timestamp is 883238400
+    inputBob.add64(883238400); //age 27
     const encryptedCodeBob = inputBob.encrypt();
     const updateBobCodeTx = await this.identity.registerIdentity(
       this.signers.bob.address,

@@ -5,48 +5,67 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Identity is Ownable {
     mapping(address => bool) private isRegistered;
-    mapping(address => euint8) private Age;
+    mapping(address => euint64) private DateofBirth; // Store Date of Birth as an encrypted timestamp
+
     event IdentityRegistered(address indexed user);
-    event AgeUpdated(address indexed user);
+    event DateofBirthUpdated(address indexed user);
 
     constructor() Ownable(msg.sender) {}
 
-    function registerIdentity(address user, einput encryptedAge, bytes calldata inputProof) external onlyOwner {
+    // Register identity with encrypted Date of Birth (DOB)
+    function registerIdentity(address user, einput encryptedDOB, bytes calldata inputProof) external onlyOwner {
         require(!isRegistered[user], "Identity already registered");
-        euint8 age = TFHE.asEuint8(encryptedAge, inputProof);
-        Age[user] = age;
+
+        euint64 dob = TFHE.asEuint64(encryptedDOB, inputProof);
+        DateofBirth[user] = dob;
         isRegistered[user] = true;
-        TFHE.allow(Age[user], msg.sender);
-        TFHE.allow(Age[user], user);
-        TFHE.allow(Age[user], address(this));
+
+        TFHE.allow(DateofBirth[user], msg.sender);
+        TFHE.allow(DateofBirth[user], user);
+        TFHE.allow(DateofBirth[user], address(this));
+
         emit IdentityRegistered(user);
     }
 
-    function updateAge(address user, einput encryptedAge, bytes calldata inputProof) external onlyOwner {
+    // Update DOB for a user
+    function updateDOB(address user, einput encryptedDateofBirth, bytes calldata inputProof) external onlyOwner {
         require(isRegistered[user], "Identity not registered");
 
-        euint8 age = TFHE.asEuint8(encryptedAge, inputProof);
-        Age[user] = age;
+        euint64 dob = TFHE.asEuint64(encryptedDateofBirth, inputProof);
+        DateofBirth[user] = dob;
 
-        // Allow access to the updated encrypted age
-        TFHE.allow(Age[user], msg.sender);
-        TFHE.allow(Age[user], address(this));
+        // Allow access to the updated encrypted DOB
+        TFHE.allow(DateofBirth[user], msg.sender);
+        TFHE.allow(DateofBirth[user], address(this));
 
-        emit AgeUpdated(msg.sender);
+        emit DateofBirthUpdated(user);
     }
 
+    // Calculate if user meets the minimum age requirement
     function checkAgeRequirement(address from, address to, uint8 minAge) public returns (ebool) {
         require(isRegistered[from], "From address is not registered");
         require(isRegistered[to], "To address is not registered");
 
-        euint8 fromAge = Age[from];
-        euint8 toAge = Age[to];
+        euint64 fromDOB = DateofBirth[from];
+        euint64 toDOB = DateofBirth[to];
 
-        ebool result = TFHE.and(TFHE.ge(fromAge, minAge), TFHE.ge(toAge, minAge));
+        uint64 currentTime = uint64(block.timestamp);
+
+        euint64 fromAgeInSeconds = TFHE.sub(currentTime, fromDOB);
+        euint64 toAgeInSeconds = TFHE.sub(currentTime, toDOB);
+
+        uint64 secondsInYear = 31557600; // 365.25 * 24 * 60 * 60
+
+        euint64 fromAge = TFHE.div(fromAgeInSeconds, secondsInYear);
+        euint64 toAge = TFHE.div(toAgeInSeconds, secondsInYear);
+        ebool fromAgeValid = TFHE.ge(fromAge, minAge);
+        ebool toAgeValid = TFHE.ge(toAge, minAge);
+        ebool result = TFHE.and(fromAgeValid, toAgeValid);
 
         // Allow querying contract to access the result
         TFHE.allow(result, msg.sender);
         TFHE.allow(result, address(this));
+
         return result;
     }
 
@@ -54,12 +73,12 @@ contract Identity is Ownable {
         return isRegistered[user];
     }
 
-    function getIdentity(address user) external returns (euint8) {
+    function getDOB(address user) external returns (euint64) {
         require(isRegistered[user], "User is not registered");
 
-        euint8 age = Age[user];
-        TFHE.allow(age, msg.sender);
-        TFHE.allow(age, address(this));
-        return age;
+        euint64 dob = DateofBirth[user];
+        TFHE.allow(dob, msg.sender);
+        TFHE.allow(dob, address(this));
+        return dob;
     }
 }
