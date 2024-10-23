@@ -2,7 +2,7 @@ import { expect } from "chai";
 
 import { createInstances } from "../instance";
 import { getSigners, initSigners } from "../signers";
-import { deployConfidentialERC20Fixture } from "./cerc20.fixture";
+import { deployConfidentialERC20Fixture } from "./confidentialerc20.fixture";
 
 describe("Confidential ERC20 tests", function () {
   before(async function () {
