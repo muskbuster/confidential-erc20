@@ -49,7 +49,7 @@ const chainIds = {
   Inco: 9000,
   local: 9000,
   localNetwork1: 9000,
-  rivest: 9000,
+  rivest: 21097,
   multipleValidatorTestnet: 8009,
 };
 
