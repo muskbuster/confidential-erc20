@@ -4,11 +4,11 @@ pragma solidity ^0.8.24;
 import "fhevm/lib/TFHE.sol";
 import { ConfidentialToken } from "../ConfidentialERC20/ConfidentialToken.sol";
 import "./Identity.sol";
-import "./TransferRules.sol";
+import "./Interfaces/ITransferRules.sol";
 
 contract CompliantConfidentialERC20 is ConfidentialToken {
     Identity public identityContract;
-    TransferRules public transferRulesContract;
+    ITransferRules public transferRulesContract;
     constructor(
         string memory name_,
         string memory symbol_,
@@ -16,7 +16,7 @@ contract CompliantConfidentialERC20 is ConfidentialToken {
         address _transferRulesContract
     ) ConfidentialToken(name_, symbol_) {
         identityContract = Identity(_identityContract);
-        transferRulesContract = TransferRules(_transferRulesContract);
+        transferRulesContract = ITransferRules(_transferRulesContract);
     }
 
     // Overridden transfer function handling encrypted inputs
@@ -38,7 +38,7 @@ contract CompliantConfidentialERC20 is ConfidentialToken {
 
         // Apply transfer rules
         TFHE.allow(transferAmount, address(transferRulesContract));
-        ebool rulesPassed = transferRulesContract.transfer(msg.sender, to, transferAmount);
+        ebool rulesPassed = transferRulesContract.transferAllowed(msg.sender, to, transferAmount);
         transferAmount = TFHE.select(rulesPassed, transferAmount, TFHE.asEuint64(0));
 
         TFHE.allow(transferAmount, address(this));

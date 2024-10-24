@@ -94,7 +94,7 @@ describe("CompliantConfidentialERC20 Contract Tests", function () {
     const input = this.instances.alice.createEncryptedInput(this.contractAddress, this.signers.alice.address);
     input.add64(100);
     const encryptedTransferAmount = input.encrypt();
-    const tx = await this.transferRules["transfer(address,address,bytes32,bytes)"](
+    const tx = await this.transferRules["transferAllowed(address,address,bytes32,bytes)"](
       this.signers.alice.address,
       this.signers.bob.address,
       encryptedTransferAmount.handles[0],
