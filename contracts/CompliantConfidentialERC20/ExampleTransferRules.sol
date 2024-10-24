@@ -24,7 +24,17 @@ contract ExampleTransferRules is ITransferRules, Ownable2Step {
         minimumAge = _minimumAge;
     }
 
-    function transferAllowed(address from, address to, euint64 amount) external override returns (ebool) {
+    function transferAllowed(
+        address from,
+        address to,
+        einput amount,
+        bytes calldata inputproof
+    ) public returns (ebool) {
+        euint64 eamount = TFHE.asEuint64(amount, inputproof);
+        return transferAllowed(from, to, eamount);
+    }
+
+    function transferAllowed(address from, address to, euint64 amount) public override returns (ebool) {
         // Condition 1: Check that addresses are not blacklisted
         if (userBlocklist[from] || userBlocklist[to]) {
             ebool transferable = TFHE.asEbool(false);
