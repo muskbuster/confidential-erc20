@@ -46,7 +46,6 @@ if (!mnemonic) {
 }
 
 const chainIds = {
-  Inco: 9000,
   local: 9000,
   localNetwork1: 9000,
   rivest: 21097,
@@ -69,10 +68,6 @@ function getChainConfig(chain: keyof typeof chainIds): NetworkUserConfig {
       break;
     case "multipleValidatorTestnet":
       jsonRpcUrl = "https://rpc.fhe-ethermint.zama.ai";
-      break;
-    case "Inco":
-      jsonRpcUrl = "https://validator.rivest.inco.org";
-      gatewayUrl = "https://gateway.rivest.inco.org";
       break;
   }
   return {
@@ -150,7 +145,6 @@ const config: HardhatUserConfig = {
         path: "m/44'/60'/0'/0",
       },
     },
-    Inco: getChainConfig("Inco"),
     localDev: getChainConfig("local"),
     local: getChainConfig("local"),
     localNetwork1: getChainConfig("localNetwork1"),

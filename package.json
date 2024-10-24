@@ -91,7 +91,7 @@
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain",
     "test": "hardhat test",
     "test:mock": "hardhat test --network hardhat",
-    "test:rivest": "hardhat test --network Inco",
+    "test:rivest": "hardhat test --network rivest",
     "coverage:mock": "hardhat coverage",
     "task:getEthereumAddress": "hardhat task:getEthereumAddress",
     "task:deployERC20": "hardhat task:deployERC20",
