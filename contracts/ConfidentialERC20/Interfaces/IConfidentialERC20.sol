@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-3-Clause-Clear
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/IERC20.sol)
 import "fhevm/lib/TFHE.sol";
 
