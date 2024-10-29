@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/ERC20.sol)
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import { IConfidentialERC20 } from "./Interfaces/IConfidentialERC20.sol";
 import { IERC20Metadata } from "./Utils/IERC20Metadata.sol";

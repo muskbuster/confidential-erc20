@@ -8,4 +8,7 @@ contract MyToken is ERC20 {
     constructor() ERC20("MyToken", "MTK") {
         _mint(msg.sender, 1000);
     }
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
 }
