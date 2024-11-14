@@ -23,14 +23,14 @@ contract ConfidentialERC20Wrapper is ConfidentialToken {
     error UnwrapNotAllowed(address account);
 
     constructor(address _baseERC20) ConfidentialToken("Wrapped cERC20", "wcERC20") {
-        uint8 baseERCdecimals=IERC20extended(_baseERC20).decimals();
+        uint8 baseERCdecimals = IERC20extended(_baseERC20).decimals();
         require(baseERCdecimals <= 6, "Base ERC20 token must have 6 or less decimals");
         baseERC20 = IERC20(_baseERC20);
         _decimals = baseERCdecimals;
         // set the wrapper decimals to be the same as the base token
     }
 
-function decimals() public view override returns (uint8) {
+    function decimals() public view override returns (uint8) {
         return _decimals;
     }
 

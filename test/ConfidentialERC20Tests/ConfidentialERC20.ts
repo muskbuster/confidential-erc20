@@ -43,7 +43,7 @@ describe("Confidential ERC20 tests", function () {
     const totalSupply = await this.erc20.totalSupply();
     expect(totalSupply).to.equal(1000);
   });
-  it ("should mint to bob", async function () {
+  it("should mint to bob", async function () {
     const transaction = await this.erc20.mint(this.signers.bob, 1000);
     await transaction.wait();
 
@@ -68,7 +68,6 @@ describe("Confidential ERC20 tests", function () {
 
     const totalSupply = await this.erc20.totalSupply();
     expect(totalSupply).to.equal(1000);
- 
   });
   it("should transfer tokens between two users", async function () {
     const transaction = await this.erc20.mint(this.signers.alice, 10000);
