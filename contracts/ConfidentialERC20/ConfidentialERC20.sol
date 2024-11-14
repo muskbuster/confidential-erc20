@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/ERC20.sol)
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import { IConfidentialERC20 } from "./Interfaces/IConfidentialERC20.sol";
 import { IERC20Metadata } from "./Utils/IERC20Metadata.sol";
@@ -228,7 +228,7 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
         }
         _balances[account] = TFHE.add(_balances[account], value);
         TFHE.allow(_balances[account], address(this));
-        TFHE.allow(_balances[account], msg.sender);
+        TFHE.allow(_balances[account], account);
         _totalSupply += value;
     }
 

@@ -2,7 +2,7 @@
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/IERC20.sol)
 import "fhevm/lib/TFHE.sol";
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 /**
  * @dev Interface of the ERC-20 standard as defined in the ERC.
