@@ -228,7 +228,7 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
         }
         _balances[account] = TFHE.add(_balances[account], value);
         TFHE.allow(_balances[account], address(this));
-        TFHE.allow(_balances[account], msg.sender);
+        TFHE.allow(_balances[account], account);
         _totalSupply += value;
     }
 

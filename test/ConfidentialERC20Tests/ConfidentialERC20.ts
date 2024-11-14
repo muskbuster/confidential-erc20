@@ -43,7 +43,33 @@ describe("Confidential ERC20 tests", function () {
     const totalSupply = await this.erc20.totalSupply();
     expect(totalSupply).to.equal(1000);
   });
+  it ("should mint to bob", async function () {
+    const transaction = await this.erc20.mint(this.signers.bob, 1000);
+    await transaction.wait();
 
+    //Reencrypt Bob's balance
+    const balanceHandleBob = await this.erc20.balanceOf(this.signers.bob);
+    const { publicKey: publicKeyBob, privateKey: privateKeyBob } = this.instances.bob.generateKeypair();
+    const eip712 = this.instances.bob.createEIP712(publicKeyBob, this.contractAddress);
+    const signatureBob = await this.signers.bob.signTypedData(
+      eip712.domain,
+      { Reencrypt: eip712.types.Reencrypt },
+      eip712.message,
+    );
+    const balanceBob = await this.instances.bob.reencrypt(
+      balanceHandleBob,
+      privateKeyBob,
+      publicKeyBob,
+      signatureBob.replace("0x", ""),
+      this.contractAddress,
+      this.signers.bob.address,
+    );
+    expect(balanceBob).to.equal(1000);
+
+    const totalSupply = await this.erc20.totalSupply();
+    expect(totalSupply).to.equal(1000);
+ 
+  });
   it("should transfer tokens between two users", async function () {
     const transaction = await this.erc20.mint(this.signers.alice, 10000);
     const t1 = await transaction.wait();
