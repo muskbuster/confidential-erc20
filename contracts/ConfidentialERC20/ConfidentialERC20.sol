@@ -286,7 +286,7 @@ abstract contract ConfidentialERC20 is Ownable, IConfidentialERC20, IERC20Metada
     /**
      * @dev Retries a burn request
      */
-    function retryBurn(uint256 oldRequest) public virtual {
+    function retryBurn(uint256 oldRequest) internal virtual {
         BurnRq memory burnRequest = burnRqs[oldRequest];
         require(burnRequest.account == msg.sender, "Only the requester can retry the burn");
         delete burnRqs[oldRequest];
